@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Upload Users - CoE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="common.js"></script>
+<style>
+/* ---------- CSS Variables for Theme ---------- */
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --primary-light: #6366f1;
+  --accent: #06b6d4;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --bg-gradient-start: #f8fafc;
+  --bg-gradient-end: #e0e7ff;
+  --card-bg: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- Reset and Base ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+  color: var(--text-primary);
+  padding: 20px;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ---------- Card Container ---------- */
+.card {
+  background: var(--card-bg);
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.6s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Header Section ---------- */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.header-left {
+  flex: 1;
+  min-width: 200px;
+}
+
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+h1::before {
+  content: "⏫";
+  font-size: 28px;
+  -webkit-text-fill-color: initial;
+}
+
+#welcome {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#welcome::before {
+  content: "👤";
+  font-size: 16px;
+}
+
+/* ---------- Button Styles ---------- */
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn i {
+  font-size: 14px;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgba(79, 70, 229, 0.4);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+}
+
+.btn-success:hover {
+  box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.4);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+}
+
+.btn-warning:hover {
+  box-shadow: 0 8px 16px -4px rgba(245, 158, 11, 0.4);
+}
+
+/* ---------- Divider ---------- */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  margin: 28px 0;
+}
+
+/* ---------- Template Section ---------- */
+.template-section {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  border: 2px solid #fbbf24;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.template-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.template-info h3 {
+  font-size: 18px;
+  color: #92400e;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-info h3::before {
+  content: "📋";
+  font-size: 20px;
+}
+
+.template-info p {
+  font-size: 14px;
+  color: #78350f;
+  font-weight: 500;
+}
+
+/* ---------- Upload Section ---------- */
+.upload-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 32px;
+  border: 2px dashed var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.upload-section:hover {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, #f1f5f9 0%, #e0e7ff 100%);
+}
+
+.upload-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.upload-header::before {
+  content: "📁";
+  font-size: 24px;
+}
+
+/* ---------- File Input ---------- */
+.file-input-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.file-input-label {
+  display: block;
+  padding: 32px 24px;
+  border: 3px dashed var(--border-color);
+  border-radius: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.file-input-label:hover {
+  border-color: var(--primary);
+  background: #f8fafc;
+}
+
+.file-input-label i {
+  font-size: 48px;
+  color: var(--primary);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.file-input-label .label-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.file-input-label .label-subtext {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+input[type="file"] {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.file-selected {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #ecfdf5;
+  border-radius: 10px;
+  border: 2px solid #10b981;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.file-selected i {
+  color: #10b981;
+  font-size: 18px;
+}
+
+.file-selected.show {
+  display: flex;
+}
+
+/* ---------- Upload Button ---------- */
+.upload-button-wrapper {
+  text-align: center;
+  margin-top: 24px;
+}
+
+#btnUpload {
+  padding: 16px 32px;
+  font-size: 16px;
+  min-width: 200px;
+}
+
+/* ---------- Upload Message ---------- */
+#uploadMsg {
+  margin-top: 20px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+#uploadMsg.show {
+  display: block;
+}
+
+#uploadMsg.success {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 2px solid #10b981;
+}
+
+#uploadMsg.error {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+  border: 2px solid #ef4444;
+}
+
+#uploadMsg.info {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e3a8a;
+  border: 2px solid #3b82f6;
+}
+
+/* ---------- Info Box ---------- */
+.info-box {
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-left: 4px solid var(--primary);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.info-box h4 {
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-box h4::before {
+  content: "ℹ️";
+}
+
+.info-box ul {
+  margin-left: 20px;
+  margin-top: 8px;
+}
+
+.info-box li {
+  margin-bottom: 4px;
+}
+
+/* ---------- Users Section ---------- */
+.users-section {
+  margin-top: 40px;
+  animation: fadeIn 0.5s ease;
+}
+
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.users-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---------- Search Box ---------- */
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+  min-width: 250px;
+}
+
+.search-wrapper i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 12px 16px 12px 45px;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: white;
+  transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+#searchInput::placeholder {
+  color: var(--text-secondary);
+}
+
+/* ---------- Stats Cards ---------- */
+.users-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
+}
+
+.stat-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+
+/* ---------- Table Styles ---------- */
+#reportTable {
+  overflow-x: auto;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  background: white;
+  animation: fadeIn 0.5s ease;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 700px;
+}
+
+th, td {
+  padding: 16px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+th {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+th:first-child {
+  border-top-left-radius: 12px;
+}
+
+th:last-child {
+  border-top-right-radius: 12px;
+}
+
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+  transform: scale(1.01);
+}
+
+tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+tbody tr:nth-child(even):hover {
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+}
+
+td:first-child {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+td strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ---------- Role Badges ---------- */
+.role-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-badge.student {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border: 2px solid #3b82f6;
+}
+
+.role-badge.coe {
+  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+  color: #9f1239;
+  border: 2px solid #ec4899;
+}
+
+.role-badge.staff {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 2px solid #10b981;
+}
+
+/* ---------- Empty State ---------- */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  border: 2px dashed var(--border-color);
+}
+
+.empty-state::before {
+  content: "📭";
+  font-size: 64px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+/* ---------- Responsive Design ---------- */
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 28px 24px;
+    border-radius: 20px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .template-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .upload-section {
+    padding: 24px 20px;
+  }
+
+  .file-input-label {
+    padding: 24px 16px;
+  }
+
+  .file-input-label i {
+    font-size: 36px;
+  }
+
+  #btnUpload {
+    width: 100%;
+  }
+
+  .users-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .users-header h2 {
+    font-size: 20px;
+  }
+
+  .search-wrapper {
+    max-width: 100%;
+  }
+
+  .users-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 24px 20px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .upload-header {
+    font-size: 16px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  th, td {
+    padding: 10px 8px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .stat-icon {
+    font-size: 28px;
+  }
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Loading Spinner ---------- */
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body onload="initLock()">
+
+<div class="card">
+  <div class="card-header">
+    <div class="header-left">
+      <h1>Users Upload</h1>
+      <span id="welcome">Welcome, Admin</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn" onclick="window.location.href='coe.html'">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+      </button>
+      <button class="btn" onclick="window.location.href='lock.html'">
+        <i class="fas fa-lock"></i> Lock
+      </button>
+      <button class="btn" onclick="window.location.href='report.html'">
+        <i class="fas fa-file-alt"></i> Reports
+      </button>
+      <button class="btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="template-section">
+    <div class="template-info">
+      <h3>Excel Template</h3>
+      <p>Download the template to upload user data in the correct format</p>
+    </div>
+    <button class="btn btn-warning" onclick="downloadTemplate()">
+      <i class="fas fa-download"></i> Download Template
+    </button>
+  </div>
+
+  <div class="upload-section">
+    <div class="upload-header">Upload Excel File</div>
+
+    <div class="file-input-wrapper">
+      <label for="excelFile" class="file-input-label" id="fileLabel">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span class="label-text">Choose Excel File</span>
+        <span class="label-subtext">or drag and drop here (.xlsx, .xls)</span>
+      </label>
+      <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleFileSelect()" />
+      <div class="file-selected" id="fileSelected">
+        <i class="fas fa-check-circle"></i>
+        <span id="fileName">File selected</span>
+      </div>
+    </div>
+
+    <div class="upload-button-wrapper">
+      <button id="btnUpload" class="btn btn-success" onclick="uploadExcel()">
+        <i class="fas fa-upload"></i> Upload & Save Users
+      </button>
+    </div>
+
+    <div id="uploadMsg"></div>
+
+    <div class="info-box">
+      <h4>Upload Instructions</h4>
+      <ul>
+        <li>Download the template and fill in user details</li>
+        <li>Required columns: email, password, Name, Role, Department, Student Roll No</li>
+        <li>Save the file as .xlsx or .xls format</li>
+        <li>Upload the completed file using the form above</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- User List Section -->
+  <div class="users-section" id="usersSection" style="display:none;">
+    <div class="divider"></div>
+    
+    <div class="users-header">
+      <h2>📋 Uploaded Users</h2>
+      <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search by name, email, or roll no..." onkeyup="filterUsers()" />
+      </div>
+    </div>
+
+    <div class="users-stats">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-info">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value" id="totalUsers">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📚</div>
+        <div class="stat-info">
+          <div class="stat-label">Students</div>
+          <div class="stat-value" id="totalStudents">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎓</div>
+        <div class="stat-info">
+          <div class="stat-label">Staff/CoE</div>
+          <div class="stat-value" id="totalStaff">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="reportTable"></div>
+  </div>
+</div>
+
+<script>
+
+let user=null;
+let allUsers = [];
+
+function initLock() {
+  user=requireRole('CoE');
+  if(!user) return;
+  document.getElementById('welcome').innerText=`Signed in as: ${user.name}`;
+  loadUsers();
+}
+
+async function loadUsers() {
+  try {
+    const res = await apiFetch({ action: 'getAllUsers' });
+    if(res.success && res.users) {
+      allUsers = res.users;
+      displayUsers(allUsers);
+      updateStats(allUsers);
+      document.getElementById('usersSection').style.display = 'block';
+    }
+  } catch(e) {
+    console.log('Error loading users:', e);
+  }
+}
+
+function displayUsers(users) {
+  const container = document.getElementById('reportTable');
+  
+  if(!users || users.length === 0) {
+    container.innerHTML = '<div class="empty-state">No users found</div>';
+    return;
+  }
+
+  let html = '<div class="table-wrapper"><table>';
+  html += '<thead><tr>';
+  html += '<th>#</th>';
+  html += '<th>Name</th>';
+  html += '<th>Email</th>';
+  html += '<th>Role</th>';
+  html += '<th>Department</th>';
+  html += '<th>Roll No</th>';
+  html += '</tr></thead><tbody>';
+
+  users.forEach((u, idx) => {
+    html += `<tr>
+      <td>${idx + 1}</td>
+      <td><strong>${u.name || '-'}</strong></td>
+      <td>${u.email || '-'}</td>
+      <td><span class="role-badge ${(u.role || '').toLowerCase()}">${u.role || '-'}</span></td>
+      <td>${u.department || '-'}</td>
+      <td>${u.studentRollNo || '-'}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function filterUsers() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+  
+  if(!searchTerm) {
+    displayUsers(allUsers);
+    return;
+  }
+
+  const filtered = allUsers.filter(u => {
+    const name = (u.name || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const rollNo = (u.studentRollNo || '').toLowerCase();
+    const dept = (u.department || '').toLowerCase();
+    const role = (u.role || '').toLowerCase();
+    
+    return name.includes(searchTerm) || 
+           email.includes(searchTerm) || 
+           rollNo.includes(searchTerm) ||
+           dept.includes(searchTerm) ||
+           role.includes(searchTerm);
+  });
+
+  displayUsers(filtered);
+}
+
+function updateStats(users) {
+  const total = users.length;
+  const students = users.filter(u => (u.role || '').toLowerCase() === 'student').length;
+  const staff = total - students;
+
+  document.getElementById('totalUsers').textContent = total;
+  document.getElementById('totalStudents').textContent = students;
+  document.getElementById('totalStaff').textContent = staff;
+}
+
+function handleFileSelect() {
+  const fileInput = document.getElementById('excelFile');
+  const fileSelected = document.getElementById('fileSelected');
+  const fileName = document.getElementById('fileName');
+  
+  if(fileInput.files.length > 0) {
+    fileName.textContent = fileInput.files[0].name;
+    fileSelected.classList.add('show');
+  } else {
+    fileSelected.classList.remove('show');
+  }
+}
+
+function downloadTemplate(){
+  const headers = ["email","password","Name","Role","Department","Student Roll No"];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([headers]);
+  XLSX.utils.book_append_sheet(wb, ws, "UsersTemplate");
+  XLSX.writeFile(wb, "Users_Template.xlsx");
+}
+
+async function uploadExcel(){
+  const file = document.getElementById("excelFile").files[0];
+  const msg = document.getElementById("uploadMsg");
+  const btnUpload = document.getElementById("btnUpload");
+  
+  msg.textContent = "";
+  msg.className = "";
+  msg.classList.remove('show');
+
+  if (!file) { 
+    msg.textContent = "⚠️ Please choose a file first";
+    msg.className = "error show";
+    return;
+  }
+
+  // Show loading state
+  btnUpload.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  btnUpload.disabled = true;
+
+  msg.textContent = "📖 Reading Excel file...";
+  msg.className = "info show";
+
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, { type: "array" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+  if (!rows.length) { 
+    msg.textContent = "❌ No data found in the Excel file";
+    msg.className = "error show";
+    btnUpload.innerHTML = '<i class="fas fa-upload"></i> Upload & Save Users';
+    btnUpload.disabled = false;
+    return;
+  }
+
+  const users = rows.map(r => ({
+    email: r["email"],
+    password: r["password"],
+    name: r["Name"],
+    role: r["Role"],
+    department: r["Department"],
+    studentRollNo: r["Student Roll No"]
+  }));
+
+  msg.textContent = "⚙️ Processing and uploading...";
+  msg.className = "info show";
+
+  const res = await apiFetch({ action: "uploadUsersOverwrite", users });
+
+  btnUpload.innerHTML = '<i class="fas fa-upload"></i> Upload & Save Users';
+  btnUpload.disabled = false;
+
+  if (res.success) {
+    msg.textContent = `✅ Successfully uploaded ${res.count} users!`;
+    msg.className = "success show";
+    
+    // Clear file input
+    document.getElementById('excelFile').value = '';
+    document.getElementById('fileSelected').classList.remove('show');
+    
+    // Reload users list
+    await loadUsers();
+  } else {
+    msg.textContent = "❌ Upload failed: " + (res.message || "Unknown error");
+    msg.className = "error show";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("user");
+  location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

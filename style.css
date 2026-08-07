@@ -1,0 +1,208 @@
+/* ---------- Base styles ---------- */
+body {
+  font-family: Arial, sans-serif;
+  margin: 18px;
+  background: #f7f9fc;
+  color: #222;
+  overflow-x: hidden; /* prevents sideways scrolling */
+}
+
+.card {
+  background: #fff;
+  padding: 18px;
+  border-radius: 8px;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+/* Buttons */
+.btn {
+  background: #2463eb;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.3s;
+}
+.btn:hover {
+  background: #1e4fd1;
+}
+
+.btn-secondary {
+  background: #ccc;
+  color: #333;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+/* ---------- Table responsiveness ---------- */
+.table-wrapper {
+  overflow-x: auto; /* enables horizontal scroll on mobile */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+th {
+  background: #2463eb;
+  color: white;
+}
+
+/* ---------- Grid layout for boxes ---------- */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.exam-box {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  padding: 15px;
+  transition: all 0.2s ease;
+}
+.exam-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+
+.exam-hall {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2563eb;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.exam-detail {
+  font-size: 14px;
+  margin: 3px 0;
+  color: #333;
+}
+
+.locked {
+  color: red;
+  font-weight: bold;
+  text-align: center;
+  padding: 30px 0;
+}
+
+/* ---------- Responsive typography ---------- */
+h1 {
+  font-size: clamp(1.4rem, 2vw + 1rem, 2.2rem);
+}
+h2 {
+  font-size: clamp(1.2rem, 1.5vw + 1rem, 1.8rem);
+}
+
+/* ---------- Media Queries ---------- */
+@media (max-width: 768px) {
+  .card {
+    width: 95%;
+    padding: 15px;
+  }
+
+  th, td {
+    font-size: 13px;
+    padding: 6px;
+  }
+
+  .btn, .btn-secondary {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+
+  .exam-box {
+    padding: 12px;
+  }
+
+  .exam-hall {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    margin: 10px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 10px;
+  }
+
+  h1, h2 {
+    text-align: center;
+  }
+
+  .exam-hall {
+    font-size: 18px;
+  }
+
+  .grid-container {
+    grid-template-columns: 1fr; /* single column for phones */
+  }
+
+  th, td {
+    font-size: 12px;
+  }
+}
+/* Prevent horizontal scroll due to large content */
+* {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Make buttons, inputs, and selects auto-adjust on mobile */
+@media (max-width: 768px) {
+  button, .btn, .btn-secondary, input, select {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  /* Stack header or control elements vertically */
+  .header, .toolbar, .filters, .actions, .top-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* Ensure tables remain scrollable */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Reduce card shadow on small screens */
+  .card {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* For very small screens (under 400px width) */
+@media (max-width: 400px) {
+  h1 { font-size: 1.3rem; }
+  h2 { font-size: 1.1rem; }
+  th, td { font-size: 11px; }
+  .btn, .btn-secondary { font-size: 13px; padding: 6px 8px; }
+}
+

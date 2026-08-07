@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Staff Dashboard - Hall Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="common.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    /* === CSS Variables === */
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --secondary: #8b5cf6;
+      --accent: #ec4899;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      
+      --present: #10b981;
+      --present-light: #d1fae5;
+      --absent: #ef4444;
+      --absent-light: #fee2e2;
+      --od: #8b5cf6;
+      --od-light: #ede9fe;
+      
+      --bg-main: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --bg-card: #ffffff;
+      --bg-hover: #f8fafc;
+      --bg-light: #f1f5f9;
+      
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-light: #94a3b8;
+      
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      
+      --radius-sm: 8px;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
+    /* === Global Reset === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    /* === Header === */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px 32px;
+      border-radius: var(--radius-xl);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-left h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header-left .welcome {
+      font-size: 14px;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius);
+      padding: 12px 24px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* === Card Styles === */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      padding: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      animation: slideUp 0.5s ease;
+      border: 1px solid var(--border-light);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* === Control Panel === */
+    .control-panel {
+      background: linear-gradient(135deg, #f0f9ff, #e0e7ff);
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+    }
+
+    .form-control {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    select,
+    input[type="date"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    select:hover,
+    input[type="date"]:hover {
+      border-color: var(--primary-light);
+    }
+
+    select:focus,
+    input[type="date"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    /* === Buttons === */
+    .btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success), #059669);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* === Instructions Panel === */
+    .instructions {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fbbf24;
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .instructions-icon {
+      font-size: 32px;
+    }
+
+    .instructions-text {
+      flex: 1;
+    }
+
+    .instructions-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .instructions-details {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* === Status Message === */
+    .status-message {
+      padding: 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideDown 0.3s ease;
+    }
+
+    .status-locked {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 2px solid var(--danger);
+    }
+
+    .status-loading {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 2px solid var(--info);
+    }
+
+    /* === Hall Grid === */
+    .hall-grid-container {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      min-height: 400px;
+    }
+
+    .hall-grid {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      min-width: 100px;
+      flex: 1 1 100px;
+    }
+
+    .col-label {
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--primary);
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+      color: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .seat {
+      padding: 12px;
+      border-radius: var(--radius);
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+      white-space: normal;
+      word-wrap: break-word;
+      min-width: 90px;
+      line-height: 1.4;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .seat:hover {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: var(--shadow-md);
+    }
+
+    .seat strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .seat small {
+      display: block;
+      font-size: 10px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    /* Status Colors */
+    .present {
+      background: linear-gradient(135deg, var(--present-light), #d1fae5);
+      border-color: var(--present);
+      color: #065f46;
+    }
+
+    .present:hover {
+      background: linear-gradient(135deg, #a7f3d0, var(--present-light));
+    }
+
+    .absent {
+      background: linear-gradient(135deg, var(--absent-light), #fecaca);
+      border-color: var(--absent);
+      color: #991b1b;
+    }
+
+    .absent:hover {
+      background: linear-gradient(135deg, #fecaca, var(--absent-light));
+    }
+
+    .od {
+      background: linear-gradient(135deg, var(--od-light), #e9d5ff);
+      border-color: var(--od);
+      color: #6b21a8;
+    }
+
+    .od:hover {
+      background: linear-gradient(135deg, #e9d5ff, var(--od-light));
+    }
+
+    /* Locked State */
+    .locked .seat {
+      pointer-events: none;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .locked .seat::after {
+      content: '🔒';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 10px;
+    }
+
+    /* === Legend === */
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding: 20px;
+      background: var(--bg-light);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .legend-color {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .legend-color.present {
+      background: linear-gradient(135deg, var(--present-light), #d1fae5);
+      border-color: var(--present);
+    }
+
+    .legend-color.absent {
+      background: linear-gradient(135deg, var(--absent-light), #fecaca);
+      border-color: var(--absent);
+    }
+
+    .legend-color.od {
+      background: linear-gradient(135deg, var(--od-light), #e9d5ff);
+      border-color: var(--od);
+    }
+
+    /* === Toast Notification === */
+    #toast {
+      visibility: hidden;
+      min-width: 300px;
+      background: linear-gradient(135deg, var(--text-primary), #475569);
+      color: white;
+      text-align: center;
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      position: fixed;
+      z-index: 10000;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 15px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-xl);
+    }
+
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+      bottom: 50px;
+      animation: bounce 0.5s ease;
+    }
+
+    #toast.success {
+      background: linear-gradient(135deg, var(--success), #059669);
+    }
+
+    #toast.error {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+    }
+
+    /* === Empty State === */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-light);
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state-text {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* === Stats Summary === */
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: var(--radius);
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      border: 2px solid var(--border-light);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card.present .stat-value { color: var(--present); }
+    .stat-card.absent .stat-value { color: var(--absent); }
+    .stat-card.od .stat-value { color: var(--od); }
+
+    /* === Divider === */
+    hr {
+      border: none;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 24px 0;
+    }
+
+    /* === Animations === */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-10px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .loading {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* === Responsive Design === */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      .header {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .header-left h1 {
+        font-size: 1.5rem;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .form-row {
+        flex-direction: column;
+      }
+
+      .form-control {
+        min-width: 100%;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .seat {
+        font-size: 10px;
+        padding: 10px;
+        min-width: 70px;
+      }
+
+      .column {
+        min-width: 70px;
+      }
+
+      .col-label {
+        font-size: 16px;
+        padding: 6px 12px;
+      }
+
+      .stats-summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .legend {
+        justify-content: center;
+      }
+    }
+
+    /* === Utility Classes === */
+    .text-center { text-align: center; }
+    .text-muted { color: var(--text-secondary); }
+    .mb-2 { margin-bottom: 16px; }
+    .mt-2 { margin-top: 16px; }
+
+  </style>
+</head>
+
+<body onload="initStaff()">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>✨ Staff Dashboard</h1>
+      <div id="welcome" class="welcome"></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">
+      <span>🚪</span>
+      <span>Logout</span>
+    </button>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card">
+    
+    <!-- Control Panel -->
+    <div class="control-panel">
+      <div class="form-row">
+        <div class="form-control">
+          <label class="form-label">📅 Select Date</label>
+          <input type="date" id="dateFilter" />
+        </div>
+
+        <div class="form-control">
+          <label class="form-label">⏰ Select Batch</label>
+          <select id="batchSelect">
+            <option value="FN">Forenoon (FN)</option>
+            <option value="AN">Afternoon (AN)</option>
+          </select>
+        </div>
+
+        <div class="form-control">
+          <label class="form-label">🏛️ Select Hall</label>
+          <select id="hallSelect">
+            <option value="">-- Select Hall --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" onclick="loadHall()">
+          <span>🔍</span>
+          <span>Load Hall Data</span>
+        </button>
+        <button class="btn btn-success" id="saveBtn" onclick="saveAttendance()" disabled>
+          <span>💾</span>
+          <span>Save Attendance</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions">
+      <div class="instructions-icon">ℹ️</div>
+      <div class="instructions-text">
+        <div class="instructions-title">How to Mark Attendance</div>
+        <div class="instructions-details">
+          <strong>Single Click:</strong> Mark as Absent (🔴) | 
+          <strong>Double Click:</strong> Mark as On Duty (🟣) | 
+          <strong>Click Again:</strong> Mark as Present (🟢)
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color present"></div>
+        <span>Present 🟢</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color absent"></div>
+        <span>Absent 🔴</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color od"></div>
+        <span>On Duty 🟣</span>
+      </div>
+    </div>
+
+    <!-- Status Message -->
+    <div id="statusMsg"></div>
+
+    <!-- Statistics Summary -->
+    <div id="statsSummary" style="display:none;"></div>
+
+    <!-- Hall Grid Container -->
+    <div class="hall-grid-container">
+      <div id="hallGrid">
+        <div class="empty-state">
+          <div class="empty-state-icon">🪑</div>
+          <div class="empty-state-text">Select a hall and click "Load Hall Data" to view seating arrangement</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast"></div>
+
+<script>
+let user = null;
+let hallData = [];
+let isLocked = false;
+
+/* === INIT === */
+function initStaff(){
+  user = requireRole('Staff');
+  if(!user) return;
+  document.getElementById('welcome').innerText = `Signed in as: ${user.name} — Department: ${user.department || 'All'}`;
+  populateHalls();
+}
+
+/* === Load Halls === */
+async function populateHalls() {
+  const res = await apiFetch({ action: "getHalls", department: user.department });
+  const sel = document.getElementById('hallSelect');
+  sel.innerHTML = '<option value="">-- Select Hall --</option>';
+
+  if (!res.success) {
+    sel.innerHTML = '<option value="">Error loading halls</option>';
+    return;
+  }
+
+  const halls = res.halls || [];
+  if (halls.length === 0) {
+    sel.innerHTML = '<option value="">No halls available</option>';
+    return;
+  }
+
+  halls.forEach(h => {
+    const op = document.createElement('option');
+    op.value = h;
+    op.textContent = h;
+    sel.appendChild(op);
+  });
+}
+
+/* === Lock Check === */
+async function checkLockStatus(date) {
+  if (!date) return;
+  const batch = document.getElementById("batchSelect").value || "";
+  const res = await apiFetch({ action: "getLockStatus", date, batch });
+  const grid = document.getElementById("hallGrid");
+  const saveBtn = document.getElementById("saveBtn");
+  const statusMsg = document.getElementById("statusMsg");
+
+  if (res.lock === "Locked") {
+    isLocked = true;
+    statusMsg.innerHTML = `
+      <div class="status-message status-locked">
+        <span style="font-size:24px;">🔒</span>
+        <span>Editing locked by Controller of Examinations for ${date}</span>
+      </div>
+    `;
+    grid.classList.add("locked");
+    saveBtn.disabled = true;
+  } else {
+    isLocked = false;
+    statusMsg.innerHTML = "";
+    grid.classList.remove("locked");
+    saveBtn.disabled = false;
+  }
+}
+
+/* === Load Hall Data === */
+async function loadHall() {
+  const hallNo = document.getElementById("hallSelect").value;
+  const date = document.getElementById("dateFilter").value || "";
+  const batch = document.getElementById("batchSelect").value || "";
+
+  if (!hallNo) {
+    showToast("⚠️ Please select a hall", "error");
+    return;
+  }
+
+  if (!date) {
+    showToast("⚠️ Please select a date", "error");
+    return;
+  }
+
+  document.getElementById("hallGrid").innerHTML = `
+    <div class="empty-state loading">
+      <div class="empty-state-icon">⏳</div>
+      <div class="empty-state-text">Loading hall data...</div>
+    </div>
+  `;
+  
+  await checkLockStatus(date);
+
+  const res = await apiFetch({ action: "getHall", department: user.department, hallNo, date, batch });
+  
+  if (!res.success) {
+    document.getElementById("hallGrid").innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">❌</div>
+        <div class="empty-state-text">Error: ${res.message || 'Failed to load hall data'}</div>
+      </div>
+    `;
+    return;
+  }
+
+  hallData = res.hallData || [];
+  renderHall();
+  renderStats();
+
+  if (isLocked) {
+    document.getElementById("hallGrid").classList.add("locked");
+    document.getElementById("saveBtn").disabled = true;
+  }
+}
+
+/* === Render Stats === */
+function renderStats() {
+  const statsContainer = document.getElementById('statsSummary');
+  
+  if (!hallData.length) {
+    statsContainer.style.display = 'none';
+    return;
+  }
+
+  const present = hallData.filter(r => r.Status === 'Present').length;
+  const absent = hallData.filter(r => r.Status === 'Absent').length;
+  const od = hallData.filter(r => r.Status === 'OD').length;
+  const total = hallData.length;
+
+  statsContainer.style.display = 'grid';
+  statsContainer.className = 'stats-summary';
+  statsContainer.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value">${total}</div>
+      <div class="stat-label">Total Students</div>
+    </div>
+    <div class="stat-card present">
+      <div class="stat-value">${present}</div>
+      <div class="stat-label">Present</div>
+    </div>
+    <div class="stat-card absent">
+      <div class="stat-value">${absent}</div>
+      <div class="stat-label">Absent</div>
+    </div>
+    <div class="stat-card od">
+      <div class="stat-value">${od}</div>
+      <div class="stat-label">On Duty</div>
+    </div>
+  `;
+}
+
+/* === Render Grid === */
+function renderHall(){
+  const container = document.getElementById('hallGrid');
+  
+  if(!hallData.length){
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <div class="empty-state-text">No seating data available for this hall</div>
+      </div>
+    `;
+    document.getElementById('saveBtn').disabled = true;
+    document.getElementById('statsSummary').style.display = 'none';
+    return;
+  }
+
+  const grouped = {};
+  hallData.forEach((r, idx) => {
+    const prefix = (r.SeatNo || '').trim().charAt(0).toUpperCase() || '?';
+    if(!grouped[prefix]) grouped[prefix] = [];
+    grouped[prefix].push({...r, index: idx});
+  });
+
+  const sortedPrefixes = Object.keys(grouped).sort();
+  const grid = document.createElement('div');
+  grid.className = 'hall-grid';
+
+  sortedPrefixes.forEach(pref => {
+    const col = document.createElement('div');
+    col.className = 'column';
+    
+    const label = document.createElement('div');
+    label.className = 'col-label';
+    label.textContent = pref;
+    col.appendChild(label);
+
+    grouped[pref].sort((a,b)=>{
+      const na = parseInt(a.SeatNo.substring(1)) || 0;
+      const nb = parseInt(b.SeatNo.substring(1)) || 0;
+      return na - nb;
+    }).forEach(r=>{
+      const div = document.createElement('div');
+      div.className = 'seat ' + (r.Status==='Absent'?'absent': r.Status==='OD' ? 'od' : 'present');
+      div.innerHTML = `
+        <strong>${r.SeatNo}</strong>
+        ${r.RollNo || ''}
+        <small>${r.Name || ''}</small>
+      `;
+      div.title = `${r.RollNo} - ${r.Name || ''}\nYear: ${r.Year||''} Section: ${r.Section||''}\nStatus: ${r.Status || 'Present'}`;
+      
+      div.addEventListener('click', e => singleOrDouble(e, ()=> setAbsent(r.index,div)));
+      div.addEventListener('dblclick', e => { e.preventDefault(); setOD(r.index,div); });
+      
+      col.appendChild(div);
+    });
+    
+    grid.appendChild(col);
+  });
+
+  container.innerHTML = '';
+  container.appendChild(grid);
+  document.getElementById('saveBtn').disabled = false;
+}
+
+/* === Single/Double Click === */
+let clickTimer = null;
+function singleOrDouble(e, singleFn){
+  if (clickTimer !== null) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+    return;
+  }
+  clickTimer = setTimeout(()=>{ 
+    singleFn(); 
+    clickTimer = null; 
+  }, 250);
+}
+
+function setAbsent(idx, div){
+  hallData[idx].Status = hallData[idx].Status === 'Absent' ? 'Present' : 'Absent';
+  div.className = 'seat ' + (hallData[idx].Status==='Absent' ? 'absent' : 'present');
+  renderStats();
+}
+
+function setOD(idx, div){
+  hallData[idx].Status = hallData[idx].Status === 'OD' ? 'Present' : 'OD';
+  div.className = 'seat ' + (hallData[idx].Status==='OD' ? 'od' : (hallData[idx].Status==='Absent'?'absent':'present'));
+  renderStats();
+}
+
+/* === Save Attendance === */
+async function saveAttendance() {
+  const hallNo = document.getElementById('hallSelect').value;
+  const date = document.getElementById('dateFilter').value || '';
+  const batch = document.getElementById("batchSelect").value || "";
+
+  if (!hallNo || !date) {
+    showToast('⚠️ Please select hall and date', 'error');
+    return;
+  }
+
+  const resLock = await apiFetch({ action: 'checkLock', date });
+  if (resLock.locked) {
+    showToast(`🔒 Attendance for ${date} is locked by CoE`, 'error');
+    return;
+  }
+
+  const updates = hallData.map(r => ({ RollNo: r.RollNo, Status: r.Status }));
+  const res = await apiFetch({ action:'saveAttendance', hallNo, date, batch, updates });
+
+  if(res.success) {
+    showToast("✅ Attendance Saved Successfully!", "success");
+  } else {
+    showToast("❌ Save Failed: " + (res.message || "Unknown error"), "error");
+  }
+}
+
+/* === Toast Notification === */
+function showToast(msg, type = 'success'){
+  const toast = document.getElementById("toast");
+  toast.innerHTML = msg;
+  toast.className = `show ${type}`;
+  setTimeout(()=>{ 
+    toast.className = toast.className.replace("show",""); 
+  }, 3000);
+}
+
+/* === Logout === */
+function logout() {
+  localStorage.removeItem("user");
+  location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
