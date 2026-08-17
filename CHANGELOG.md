@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-08-17
+
+### Added
+- **Multi-Semester Database Isolation**: Added `AcademicYear`, `Semester`, and `ExamNumber` schema columns to `StudentSeating` in `DB.xlsx` and backend Apps Script.
+- **Dynamic Academic Year Dropdown**: Integrated June 1 academic year calculation starting from `2026-27` and auto-expanding year lists based on real-time date.
+- **Dynamic Semester Calculator**: Automatic term detection for `ODD` (June–Nov) and `EVEN` (Dec–May) semesters.
+
+### Changed
+- **Exam Notation**: Updated exam notation across dropdowns, forms, and PDF exports from `CAT-I` / `CAT-II` to `I` / `II`.
+- **Excel Upload Parsing**: Enhanced Excel header normalization to support flexible column aliases (`Roll No`, `Student Roll No`, `Hall`, `Hall No`, `Seat No`, `Seating No`, `Subject Code`, `Subject Name`) without requiring pre-filled `Status` values.
+- **PDF Report Layouts**: Fixed PDF logo dimensions to 85px height (Landscape) and 70px height (Portrait) while strictly maintaining image aspect ratio; auto-mapped department code `BT` to `DEPARTMENT OF BIOTECHNOLOGY`.
+- **Dynamic Term Binding**: All PDF report generators dynamically pull `AcademicYear`, `Semester`, and `ExamNumber` directly from database rows.
+
+### Fixed
+- **Date Normalization**: Resolved date string mismatches (`YYYY-MM-DD` vs `DD/MM/YYYY` vs Date objects) across `parseSheetDateCell()` in backend Google Apps Script and date-wise lock checking.
+- **Case-Insensitive Department & Hall Matching**: Fixed hall lookup filtering by trimming and normalizing department codes and hall numbers.
+- **Atomic Bulk Upload**: Converted row-by-row append loop in `handleUploadSeating` to matrix bulk `.setValues()` to prevent Apps Script timeouts.
+
+---
+
 ## [1.0.0] - 2025-08-07
 
 ### Added
@@ -31,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Data Schema
 - **Users** sheet: email, password, name, role, department, studentRollNo
-- **StudentSeating** sheet: Date, Department, Batch, HallNo, RollNo, Name, SeatNo, SubjectCode, Subject, Year, Section, Status, Reason
+- **StudentSeating** sheet: Date, Department, Batch, HallNo, RollNo, Name, SeatNo, SubjectCode, Subject, Year, Section, Status, Reason, AcademicYear, Semester, ExamNumber
 - **Settings** sheet: Date, LockStatus
 
 ---
@@ -58,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Branch | Notes |
 |---------|------|--------|-------|
+| 1.1.0 | 2026-08-17 | main | Multi-semester isolation, date normalization, & PDF enhancements |
 | 1.0.0 | 2025-08-07 | main | Initial production release |
 | dev | ongoing | dev | Active development |
 
@@ -69,5 +90,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 2. Create PR: `dev` → `main`
 3. Review & test (local or preview)
 4. Merge → auto-deploy to production
-5. Tag release: `git tag v1.0.0 && git push origin v1.0.0`
+5. Tag release: `git tag v1.1.0 && git push origin v1.1.0`
 6. Update CHANGELOG.md
