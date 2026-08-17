@@ -150,6 +150,45 @@ function handleSetSystemConfig(cfg) {
   return { success: true, config: newConfig };
 }
 
+// ---------------- Password Cryptography Helpers ----------------
+const AUTH_SECRET = "KCET_EXAM_AUTH_SECRET_SALT_2026_V1";
+
+function generateSaltHex() {
+  const bytes = [];
+  for (let i = 0; i < 16; i++) {
+    bytes.push(Math.floor(Math.random() * 256));
+  }
+  return bytes.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function computeHmacSha256Hex(textToHash) {
+  const signatureBytes = Utilities.computeHmacSha256Signature(textToHash, AUTH_SECRET);
+  return signatureBytes.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, "0")).join("");
+}
+
+function createSaltedHash(plainPassword) {
+  if (!plainPassword) return "";
+  const salt = generateSaltHex();
+  const hash = computeHmacSha256Hex(plainPassword + ":" + salt);
+  return `$pbkdf$v1$${salt}$${hash}`;
+}
+
+function verifyPassword(inputPassword, storedValue) {
+  if (!storedValue || !inputPassword) return false;
+  const sStr = String(storedValue).trim();
+  if (sStr.startsWith("$pbkdf$v1$")) {
+    const parts = sStr.split("$");
+    // Format: ["", "pbkdf", "v1", "<SALT>", "<HASH>"]
+    if (parts.length < 5) return false;
+    const salt = parts[3];
+    const storedHash = parts[4];
+    const computedHash = computeHmacSha256Hex(inputPassword + ":" + salt);
+    return computedHash === storedHash;
+  }
+  // Fallback plaintext check
+  return sStr === String(inputPassword).trim();
+}
+
 // ---------------- Login ----------------
 function handleLogin(req) {
   const { email, password } = req;
@@ -160,18 +199,34 @@ function handleLogin(req) {
   if (!data || data.length < 2) return { success: false, message: "No users" };
   data.shift();
 
-  for (let row of data) {
-    if (row[0] === email && row[1] === password) {
-      return { 
-        success: true, 
-        user: { 
-          email: row[0], 
-          name: row[2], 
-          role: row[3], 
-          department: row[4],
-          studentRollNo: row[5] || ""
-        } 
-      };
+  const reqEmail = (email || "").trim().toLowerCase();
+  const reqPass = (password || "").trim();
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const userEmail = String(row[0] || "").trim().toLowerCase();
+    const storedPass = String(row[1] || "").trim();
+
+    if (userEmail === reqEmail) {
+      const isValid = verifyPassword(reqPass, storedPass);
+      if (isValid) {
+        // Automatic Migration: If stored password is still plaintext, upgrade to salted HMAC-SHA256 in real time
+        if (!storedPass.startsWith("$pbkdf$v1$")) {
+          const newHashedPass = createSaltedHash(reqPass);
+          sheet.getRange(i + 2, 2).setValue(newHashedPass);
+        }
+
+        return { 
+          success: true, 
+          user: { 
+            email: row[0], 
+            name: row[2], 
+            role: row[3], 
+            department: row[4],
+            studentRollNo: row[5] || ""
+          } 
+        };
+      }
     }
   }
   return { success: false, message: "Invalid credentials" };
@@ -684,7 +739,8 @@ function handleUploadUsers(users) {
 
     users.forEach(u => {
       const email = (u.email || "").trim();
-      const password = (u.password || "").trim();
+      const rawPass = (u.password || "").trim();
+      const pass = rawPass.startsWith("$pbkdf$v1$") ? rawPass : createSaltedHash(rawPass);
       const name = (u.name || "").trim();
       const role = (u.role || "").trim();
       const dept = (u.department || "").trim();
@@ -692,7 +748,7 @@ function handleUploadUsers(users) {
 
       if (!email || existingEmails.includes(email.toLowerCase())) return;
 
-      toAdd.push([email, password, name, role, dept, roll]);
+      toAdd.push([email, pass, name, role, dept, roll]);
       existingEmails.push(email.toLowerCase());
     });
 
@@ -729,10 +785,12 @@ function handleUploadUsersOverwrite(users) {
       if (!email) return;
 
       const rowIndex = data.findIndex(r => (r[emailCol] || "").toLowerCase() === email);
+      const rawPass = (u.password || "").trim();
+      const pass = rawPass.startsWith("$pbkdf$v1$") ? rawPass : createSaltedHash(rawPass);
 
       const newRow = [
         u.email || "",
-        u.password || "",
+        pass,
         u.name || "",
         u.role || "",
         u.department || "",

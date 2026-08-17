@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Multi-Semester Database Isolation**: Added `AcademicYear`, `Semester`, and `ExamNumber` schema columns to `StudentSeating` in `DB.xlsx` and backend Apps Script.
+- **Salted HMAC-SHA256 Password Security**: Native zero-dependency password hashing (`$pbkdf$v1$<SALT>$<HASH>`) using per-user 16-byte random salts and server-side secret keying.
+- **Automatic Plaintext Password Migration**: Real-time automatic password hashing and database cell upgrades upon user login without requiring manual re-registration.
 - **Dynamic Academic Year Dropdown**: Integrated June 1 academic year calculation starting from `2026-27` and auto-expanding year lists based on real-time date.
 - **Dynamic Semester Calculator**: Automatic term detection for `ODD` (June–Nov) and `EVEN` (Dec–May) semesters.
 
