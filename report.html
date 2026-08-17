@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>CoE Report & CSV Download</title>
+<link rel="icon" type="image/png" href="Logo-sq.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <script src="common.js"></script>
@@ -273,7 +274,7 @@ function downloadCSV(){
    LOGO LOADER — tries multiple filenames gracefully
 ================================================================ */
 async function loadLogoForPDF(){
-  const paths=["logo.jpeg","logo.jpg","logo.png","./logo.jpeg","./logo.jpg","./logo.png"];
+  const paths=["Logo.png","logo.png","Logo-sq.png","logo.jpeg","logo.jpg","./Logo.png","./logo.png"];
   for(const src of paths){
     try{
       const r=await fetch(src,{cache:"no-cache"});
@@ -315,13 +316,11 @@ async function downloadPDF(){
     displayDate=`${d.getDate().toString().padStart(2,'0')}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getFullYear()}`;
   }
 
-  const deptMap={
-    "CSE":"COMPUTER SCIENCE AND ENGINEERING",
-    "ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING",
-    "ME":"MECHANICAL ENGINEERING",
-    "CE":"CIVIL ENGINEERING",
-    "ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE"
-  };
+  const sysCfg = await getExamConfigFromBackend();
+  const sample = lastReport[0] || {};
+  const examType = sample.ExamNumber || sysCfg.examNumber || 'I';
+  const semType  = sample.Semester   || sysCfg.semester   || 'EVEN';
+  const acYear   = sample.AcademicYear || sysCfg.academicYear || '2026-27';
 
   const absentCount=lastReport.filter(r=>(r.Status||'').toUpperCase()==='ABSENT').length;
   const odCount    =lastReport.filter(r=>(r.Status||'').toUpperCase()==='OD').length;
@@ -337,10 +336,10 @@ async function downloadPDF(){
 
     /* Logo — centred */
     if(logo){
-      const maxW=240, maxH=60, ratio=logo.w/logo.h;
+      const maxW=240, maxH=55, ratio=logo.w/logo.h;
       let lw=maxW, lh=maxW/ratio;
-      if(lh>maxH){lh=maxH;lw=maxH*ratio;}
-      doc.addImage(logo.data,logo.fmt,(PW-lw)/2,y,lw,lh);
+      if(lh>maxH){ lh=maxH; lw=maxH*ratio; }
+      doc.addImage(logo.data, logo.fmt, (PW-lw)/2, y, lw, lh);
       y+=lh+5;
     }
 
@@ -348,7 +347,7 @@ async function downloadPDF(){
     doc.setFont("times","bold"); doc.setFontSize(12); doc.setTextColor(0);
     doc.text("Office of the Controller of Examinations",PW/2,y,{align:"center"}); y+=13;
     doc.setFont("times","normal"); doc.setFontSize(10);
-    doc.text("ODD Semester – Academic Year 2025–2026",PW/2,y,{align:"center"}); y+=8;
+    doc.text(`${semType} Semester – Academic Year ${acYear}`,PW/2,y,{align:"center"}); y+=8;
 
     /* Double top border */
     doc.setDrawColor(0); doc.setLineWidth(1.5); doc.line(ML,y,PW-MR,y); y+=2;
@@ -367,13 +366,13 @@ async function downloadPDF(){
     /* ---- Info block: 3×2 bordered table ---- */
     const filterLabel=
       filterType==='Overall'   ? 'All Departments' :
-      filterType==='Department'? (deptMap[filterVal]||filterVal) :
+      filterType==='Department'? getDepartmentFullName(filterVal) :
       filterType==='Hall'      ? 'Hall No: '+filterVal :
       filterType==='Date'      ? 'Date Wise' : '—';
 
     const infoRows=[
       ["Examination Date",   displayDate||"All Dates",   "Session / Batch",  batchVal||"All"],
-      ["Filter Applied",     filterLabel,                "Academic Year",    "ODD Sem – 2025–2026"],
+      ["Filter Applied",     filterLabel,                "Academic Year",    `${sysCfg.semester} Sem – ${sysCfg.academicYear}`],
       ["Total Records",      String(lastReport.length),  "Absent / On Duty", absentCount+" Absent  |  "+odCount+" On Duty"],
     ];
 

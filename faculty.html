@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <title>Faculty Dashboard - Exam Attendance</title>
+<link rel="icon" type="image/png" href="Logo-sq.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="common.js"></script>
@@ -370,6 +371,26 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
       <div class="card-icon">📤</div>
       <h2>Upload Seating Data</h2>
     </div>
+    <div class="form-row" style="margin-bottom: 12px;">
+      <div class="form-control">
+        <label class="form-label">Academic Year</label>
+        <select id="uploadAcademicYear" class="input"></select>
+      </div>
+      <div class="form-control">
+        <label class="form-label">Semester</label>
+        <select id="uploadSemester" class="input">
+          <option value="ODD">Odd Semester</option>
+          <option value="EVEN" selected>Even Semester</option>
+        </select>
+      </div>
+      <div class="form-control">
+        <label class="form-label">Internal Exam</label>
+        <select id="uploadExamNumber" class="input">
+          <option value="I" selected>Internal Exam I</option>
+          <option value="II">Internal Exam II</option>
+        </select>
+      </div>
+    </div>
     <div class="form-row">
       <div class="form-control">
         <label class="form-label">Select Excel File</label>
@@ -399,13 +420,6 @@ td input[type="text"] { width:100%; padding:8px 12px; border:1px solid var(--bor
           <option value="">-- Select --</option>
           <option value="FN">FN</option>
           <option value="AN">AN</option>
-        </select>
-      </div>
-      <div class="form-control">
-        <label class="form-label">Select Exam</label>
-        <select id="internalExam" class="input">
-          <option value="I">Internal Exam I</option>
-          <option value="II">Internal Exam II</option>
         </select>
       </div>
     </div>
@@ -603,11 +617,32 @@ let absentees = [];
 let currentTotals = null;
 let currentYearSummary = null;
 
-function initFaculty(){
+async function initFaculty(){
   user = requireRole('Faculty');
   if(!user) return;
   document.getElementById('welcome').innerText = `Signed in as: ${user.name} — Dept: ${user.department || 'All'}`;
+  populateAcademicYearDropdown();
   populateDepartments();
+}
+
+function populateAcademicYearDropdown(){
+  const sel = document.getElementById('uploadAcademicYear');
+  if(sel) {
+    sel.innerHTML = '';
+    const { list, currentAY } = generateAcademicYearList();
+    list.forEach(ay => {
+      const op = document.createElement('option');
+      op.value = ay;
+      op.textContent = ay;
+      if(ay === currentAY) op.selected = true;
+      sel.appendChild(op);
+    });
+  }
+
+  const semSel = document.getElementById('uploadSemester');
+  if(semSel) {
+    semSel.value = getCurrentSemester();
+  }
 }
 
 async function populateDepartments(){
@@ -643,18 +678,24 @@ async function uploadExcel(){
     const wb = XLSX.read(data,{type:'array'});
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
     if(!rows.length){ msgEl.innerHTML='<div class="status-message status-error">No rows found in file</div>'; document.getElementById('btnUpload').disabled=false; return; }
+    const selectedAy = document.getElementById('uploadAcademicYear').value || getCurrentAcademicYear();
+    const selectedSem = document.getElementById('uploadSemester').value;
+    const selectedExam = document.getElementById('uploadExamNumber').value;
     const normalized = rows.map(r=>({
-      Date: r['Date']||r['date']||r['DATE']||'',
-      Department: r['Department']||r['department']||'',
-      Batch: r['Batch']||'',
-      "Hall No": r['Hall No']||r['Hall']||r['HallNo']||'',
-      "Student Roll No": r['Student Roll No']||r['Roll No']||r['RollNo']||'',
-      Name: r['Name']||r['name']||'',
-      "Seating No": r['Seating No']||r['Seat No']||r['SeatNo']||'',
-      "Subject Code": r['Subject Code']||r['SubjectCode']||'',
-      Subject: r['Subject']||r['Subject Name']||'',
-      Year: r['Year']||'',
-      Section: r['Section']||''
+      Date: r['Date']||r['date']||r['DATE']||r['Exam Date']||r['EXAM DATE']||'',
+      Department: r['Department']||r['department']||r['Dept']||r['DEPT']||user.department||'',
+      Batch: r['Batch']||r['batch']||r['BATCH']||r['Session']||r['SESSION']||'FN',
+      "Hall No": r['Hall No']||r['Hall']||r['HallNo']||r['HALL NO']||r['Hall Number']||'',
+      "Student Roll No": r['Student Roll No']||r['Roll No']||r['RollNo']||r['Roll Number']||r['ROLL NO']||r['Register No']||'',
+      Name: r['Name']||r['name']||r['Name of the Student']||r['Student Name']||r['NAME']||'',
+      "Seating No": r['Seating No']||r['Seat No']||r['SeatNo']||r['Seat Number']||r['SEAT NO']||'',
+      "Subject Code": r['Subject Code']||r['SubjectCode']||r['Course Code']||r['SUBJECT CODE']||'',
+      Subject: r['Subject']||r['Subject Name']||r['Course Name']||r['SUBJECT']||'',
+      Year: r['Year']||r['year']||r['YEAR']||'',
+      Section: r['Section']||r['section']||r['SECTION']||r['Sec']||'',
+      AcademicYear: selectedAy,
+      Semester: selectedSem,
+      ExamNumber: selectedExam
     }));
     const res = await apiFetch({ action:'uploadSeating', rows: normalized });
     msgEl.innerHTML = res.success
@@ -843,7 +884,7 @@ function logout(){ localStorage.removeItem("user"); location.href="index.html"; 
    SHARED PDF LOGO LOADER
    ================================================================ */
 async function loadLogoData(){
-  const attempts = ["logo.jpeg","logo.jpg","logo.png","./logo.jpeg","./logo.jpg"];
+  const attempts = ["Logo.png","logo.png","logo.jpeg","logo.jpg","./Logo.png","./logo.png"];
   for(const src of attempts){
     try {
       const resp = await fetch(src, {cache:"no-cache"});
@@ -853,9 +894,10 @@ async function loadLogoData(){
       const cv    = document.createElement("canvas");
       cv.width=bmp.width; cv.height=bmp.height;
       cv.getContext("2d").drawImage(bmp,0,0);
-      const fmt = src.endsWith(".png") ? "image/png" : "image/jpeg";
-      return { data: cv.toDataURL(fmt), fmt: src.endsWith(".png")?"PNG":"JPEG",
-               w: bmp.width, h: bmp.height };
+      const fmt = src.endsWith(".png") ? "PNG" : "JPEG";
+      const targetH = 150;
+      const targetW = Math.round((bmp.width / bmp.height) * targetH);
+      return { data: cv.toDataURL(src.endsWith(".png")?"image/png":"image/jpeg"), fmt, w: targetW, h: targetH, origW: bmp.width, origH: bmp.height };
     } catch(e){ /* try next */ }
   }
   return null;
@@ -962,9 +1004,11 @@ function closeHallAbsenteeModal(){
    Bottom: Exam Cell Incharge signature (centred)
    ================================================================ */
 async function generateHallAbsenteeReport() {
-
-  const examType = document.getElementById('hallReportExamType').value;
-  const acYear   = document.getElementById('hallReportAcYear').value   || '2025 – 2026';
+  const sysCfg   = await getExamConfigFromBackend();
+  const sample   = absentees[0] || {};
+  const examType = sample.ExamNumber || sysCfg.examNumber || 'I';
+  const semType  = sample.Semester   || sysCfg.semester   || 'EVEN';
+  const acYear   = sample.AcademicYear || sysCfg.academicYear || '2026-27';
   const prepBy   = document.getElementById('hallReportPreparedBy').value || '';
   const scope    = document.getElementById('hallReportScope').value;
 
@@ -972,15 +1016,7 @@ async function generateHallAbsenteeReport() {
   const dateVal = document.getElementById('dateFilter').value || '';
   const batch   = document.getElementById('batchSelect').value || '';
 
-  const deptMap = {
-    "CSE": "COMPUTER SCIENCE AND ENGINEERING",
-    "ECE": "ELECTRONICS AND COMMUNICATION ENGINEERING",
-    "ME" : "MECHANICAL ENGINEERING",
-    "CE" : "CIVIL ENGINEERING",
-    "ADS": "ARTIFICIAL INTELLIGENCE AND DATA SCIENCE",
-    "FY" : "FIRST YEAR DEPARTMENT",
-  };
-  const deptFull = deptMap[dept] || (dept ? dept.toUpperCase() : "DEPARTMENT");
+  const deptFull = getDepartmentFullName(dept);
 
   /* ── filter by scope ── */
   const allAbsOD = absentees.filter(r => {
@@ -1057,7 +1093,7 @@ async function generateHallAbsenteeReport() {
     doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
     doc.text("Office of the Controller of Examinations", PW/2, y, {align:"center"}); y+=12;
     doc.setFont("times","normal"); doc.setFontSize(9.5);
-    doc.text("EVEN Semester – " + acYear, PW/2, y, {align:"center"}); y+=7;
+    doc.text(`${semType} Semester – ${acYear}`, PW/2, y, {align:"center"}); y+=7;
 
     doc.setDrawColor(0); doc.setLineWidth(1.6); doc.line(ML,y,PW-MR,y); y+=2.5;
     doc.setLineWidth(0.5);                      doc.line(ML,y,PW-MR,y); y+=2.5;
@@ -1356,55 +1392,41 @@ async function generateHallAbsenteeReport() {
    EXISTING ABSENTEE REPORT PDF (unchanged)
    ================================================================ */
 async function generateAbsenteeReportPDF(){
-  const examType = document.getElementById('reportExamType').value;
-  const acYear   = document.getElementById('reportAcYear').value || '2025 – 2026';
+  const sysCfg   = await getExamConfigFromBackend();
+  const sample   = absentees[0] || {};
+  const examType = sample.ExamNumber || sysCfg.examNumber || 'I';
+  const semType  = sample.Semester   || sysCfg.semester   || 'EVEN';
+  const acYear   = sample.AcademicYear || sysCfg.academicYear || '2026-27';
   const prepBy   = document.getElementById('reportPreparedBy').value || '';
   const dept    = document.getElementById('deptSelect').value || user?.department || '';
   const dateVal = document.getElementById('dateFilter').value || '';
   const batch   = document.getElementById('batchSelect').value || '';
-  const deptMap = {"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
-  const deptFull = deptMap[dept] || (dept ? dept.toUpperCase() : "DEPARTMENT");
+  const deptFull = getDepartmentFullName(dept);
   const absentList = absentees.filter(r=>(r.Status||'').toUpperCase()==='ABSENT');
   const odList     = absentees.filter(r=>(r.Status||'').toUpperCase()==='OD');
   const total   = currentTotals ? (currentTotals.total   || 0) : absentees.length;
   const present = currentTotals ? (currentTotals.present || 0) : (absentees.length - absentList.length - odList.length);
   const absent  = currentTotals ? (currentTotals.absent  || 0) : absentList.length;
   const od      = currentTotals ? (currentTotals.od      || 0) : odList.length;
-  const attPct  = currentTotals ? (currentTotals.attendancePercent || 0) : (total===0 ? 0 : Math.round((present/total)*10000)/100);
-  const absPct  = total===0 ? 0 : Math.round((absent/total)*10000)/100;
-  const odPct   = total===0 ? 0 : Math.round((od/total)*10000)/100;
-  const secMap = {};
-  if(currentYearSummary){
-    for(const yr of Object.keys(currentYearSummary)){
-      const yData=currentYearSummary[yr];
-      for(const sec of Object.keys(yData.sections)){
-        const s=yData.sections[sec];
-        const key=`Year ${yr} - Section ${sec}`;
-        const pct=s.total===0?0:Math.round((s.present/s.total)*10000)/100;
-        secMap[key]={total:s.total,present:s.present,absent:s.absent,od:s.od,pct};
-      }
-    }
-  } else {
-    absentees.forEach(r=>{
-      const key=`Year ${r.Year||'?'} - Section ${r.Section||'?'}`;
-      if(!secMap[key]) secMap[key]={total:0,present:0,absent:0,od:0};
-      secMap[key].total++;
-      const st=(r.Status||'').toUpperCase();
-      if(st==='ABSENT') secMap[key].absent++;
-      else if(st==='OD') secMap[key].od++;
-      else secMap[key].present++;
-    });
-    Object.keys(secMap).forEach(k=>{
-      const d=secMap[k]; d.present=d.total-d.absent-d.od;
-      d.pct=d.total===0?0:Math.round((d.present/d.total)*10000)/100;
-    });
-  }
-  let displayDate=dateVal;
-  if(dateVal){ const dObj=new Date(dateVal); displayDate=`${dObj.getDate().toString().padStart(2,'0')}-${(dObj.getMonth()+1).toString().padStart(2,'0')}-${dObj.getFullYear()}`; }
+  const attPct  = total===0?0:(Math.round((present/total)*10000)/100);
+  const absPct  = total===0?0:(Math.round((absent/total)*10000)/100);
+  const odPct   = total===0?0:(Math.round((od/total)*10000)/100);
+  let displayDate = dateVal;
+  if(dateVal){ const d=new Date(dateVal); displayDate=`${d.getDate().toString().padStart(2,'0')}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getFullYear()}`; }
+  const secMap={};
+  absentees.forEach(r=>{
+    const y=r.Year||"NA", s=r.Section||"NA", k=`${y} - Section ${s}`, st=(r.Status||'').toUpperCase();
+    if(!secMap[k]) secMap[k]={total:0,present:0,absent:0,od:0};
+    secMap[k].total++;
+    if(st==='PRESENT') secMap[k].present++;
+    if(st==='ABSENT')  secMap[k].absent++;
+    if(st==='OD')      secMap[k].od++;
+  });
+  Object.keys(secMap).forEach(k=>{ const d=secMap[k]; d.pct=d.total===0?0:(Math.round((d.present/d.total)*10000)/100); });
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF("portrait","pt","a4");
   const PW=doc.internal.pageSize.getWidth(), PH=doc.internal.pageSize.getHeight();
-  const ML=45,MR=45,CW=PW-ML-MR, genTime=new Date().toLocaleString('en-IN');
+  const ML=45, MR=45, CW=PW-ML-MR, genTime=new Date().toLocaleString('en-IN');
   const logo=await loadLogoData();
   function contHeader(){
     let _y=14;
@@ -1418,11 +1440,16 @@ async function generateAbsenteeReportPDF(){
     return _y+8;
   }
   let y=14;
-  if(logo){ const maxW=230,maxH=58,ratio=logo.w/logo.h; let lw=maxW,lh=maxW/ratio; if(lh>maxH){lh=maxH;lw=maxH*ratio;} doc.addImage(logo.data,logo.fmt,(PW-lw)/2,y,lw,lh); y+=lh+5; }
+  if(logo){
+    const lh = 70;
+    const lw = Math.round((logo.origW / logo.origH) * lh);
+    doc.addImage(logo.data, logo.fmt, (PW - lw)/2, y, lw, lh);
+    y += lh + 5;
+  }
   doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(0);
   doc.text("Office of the Controller of Examinations",PW/2,y,{align:"center"}); y+=12;
   doc.setFont("times","normal"); doc.setFontSize(10);
-  doc.text("EVEN Semester – "+acYear,PW/2,y,{align:"center"}); y+=8;
+  doc.text(`${semType} Semester – ${acYear}`,PW/2,y,{align:"center"}); y+=8;
   doc.setDrawColor(0); doc.setLineWidth(1.5); doc.line(ML,y,PW-MR,y); y+=2;
   doc.setLineWidth(0.5); doc.line(ML,y,PW-MR,y); y+=2;
   doc.setFillColor(0); doc.rect(ML,y,CW,22,"F");
@@ -1514,11 +1541,11 @@ async function generateYearSummaryPDF(){
   const dept=document.getElementById('deptSelect').value||user?.department||'';
   const dateVal=document.getElementById('dateFilter').value||'';
   const batch=document.getElementById('batchSelect').value||'';
-  const deptMap={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
-  const deptFull=deptMap[dept]||(dept?dept.toUpperCase():"DEPARTMENT");
+  const sysCfg=getExamConfig();
+  const deptFull=getDepartmentFullName(dept);
   let displayDate=dateVal;
   if(dateVal){const dObj=new Date(dateVal);displayDate=`${dObj.getDate().toString().padStart(2,'0')}-${(dObj.getMonth()+1).toString().padStart(2,'0')}-${dObj.getFullYear()}`;}
-  const acYear="2025 – 2026";
+  const acYear=sysCfg.academicYear;
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF("portrait","pt","a4");
   const PW=doc.internal.pageSize.getWidth(),PH=doc.internal.pageSize.getHeight();
@@ -1601,23 +1628,44 @@ async function generateYearSummaryPDF(){
    EXISTING HALL PLAN FUNCTIONS (unchanged)
    ================================================================ */
 async function downloadHallPlan(){
-  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value,selectedExam=document.getElementById("internalExam").value;
-  if(!selectedDate||!selectedBatch||!selectedExam){alert("Please select Date, Batch, and Internal Exam");return;}
+  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value;
+  if(!selectedDate||!selectedBatch){alert("Please select Date and Batch");return;}
   const u=JSON.parse(localStorage.getItem("user"));
   if(!u||!u.department){alert("Department information missing. Please login again.");return;}
-  try{ const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});let data=Array.isArray(res)?res:res.success?res.data:res.result;if(!data||data.length===0){alert("No seating data found for your department on this date and batch.");return;}await generatePDF(data,selectedExam,u.department);} catch(err){console.error(err);alert("Error fetching hall plan: "+(err.message||err));}
+  try{
+    const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});
+    let data=Array.isArray(res)?res:res.success?res.data:res.result;
+    if(!data||data.length===0){alert("No seating data found for your department on this date and batch.");return;}
+    const sysCfg = await getExamConfigFromBackend();
+    const sample = data[0] || {};
+    const examType = sample.ExamNumber || sysCfg.examNumber || "CAT-I";
+    const semType = sample.Semester || sysCfg.semester || "EVEN";
+    const acYear = sample.AcademicYear || sysCfg.academicYear || "2025 – 2026";
+    await generatePDF(data,examType,u.department,{semType,acYear});
+  } catch(err){console.error(err);alert("Error fetching hall plan: "+(err.message||err));}
 }
+
 async function downloadHallPlan1(){
-  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value,selectedExam=document.getElementById("internalExam").value;
-  if(!selectedDate||!selectedBatch||!selectedExam){alert("Please select Date, Batch, and Internal Exam");return;}
+  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value;
+  if(!selectedDate||!selectedBatch){alert("Please select Date and Batch");return;}
   const u=JSON.parse(localStorage.getItem("user"));
   if(!u||!u.department){alert("Department information missing. Please login again.");return;}
-  try{ const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});let data=Array.isArray(res)?res:res.success?res.data:res.result;if(!data||data.length===0){alert("No seating data found for your department on this date and batch.");return;}await generatePDF1(data,selectedExam,u.department);} catch(err){console.error(err);alert("Error fetching hall plan: "+(err.message||err));}
+  try{
+    const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});
+    let data=Array.isArray(res)?res:res.success?res.data:res.result;
+    if(!data||data.length===0){alert("No seating data found for your department on this date and batch.");return;}
+    const sysCfg = await getExamConfigFromBackend();
+    const sample = data[0] || {};
+    const examType = sample.ExamNumber || sysCfg.examNumber || "CAT-I";
+    const semType = sample.Semester || sysCfg.semester || "EVEN";
+    const acYear = sample.AcademicYear || sysCfg.academicYear || "2025 – 2026";
+    await generatePDF1(data,examType,u.department,{semType,acYear});
+  } catch(err){console.error(err);alert("Error fetching hall plan: "+(err.message||err));}
 }
-async function generatePDF(data,examType,department){
+
+async function generatePDF(data,examType,department,meta={}){
   if(!Array.isArray(data)||data.length===0){alert("No data to generate PDF.");return;}
-  const deptMap={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
-  const departmentFullName=department&&deptMap[department]?deptMap[department]:(department?department.toUpperCase():"UNKNOWN DEPARTMENT");
+  const departmentFullName=getDepartmentFullName(department);
   const {jsPDF}=window.jspdf;const doc=new jsPDF("landscape","pt","a4");
   const pageWidth=doc.internal.pageSize.getWidth(),pageHeight=doc.internal.pageSize.getHeight();
   const getField=(obj,names)=>{for(const n of names)if(obj[n]!==undefined&&obj[n]!==null)return obj[n];return "";};
@@ -1627,14 +1675,21 @@ async function generatePDF(data,examType,department){
   const dateForName=`${dateObjForFile.getDate().toString().padStart(2,'0')}_${(dateObjForFile.getMonth()+1).toString().padStart(2,'0')}_${dateObjForFile.getFullYear()}`;
   const batchTextForName=getField(firstSample,["Batch","batch"])||"Batch";
   const halls=[...new Set(data.map(row=>getField(row,["Hall No","HallNo"])))].filter(Boolean);
-  let imgData=null;
-  try{const resp=await fetch("logo.jpeg");if(resp.ok){const blob=await resp.blob();const bitmap=await createImageBitmap(blob);const canvas=document.createElement("canvas");canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext("2d").drawImage(bitmap,0,0);imgData=canvas.toDataURL("image/jpeg");}}catch(e){console.warn("Logo load failed:",e);}
+  const logo=await loadLogoData();
+  const semStr = meta.semType || "EVEN";
+  const yearStr = meta.acYear || "2025 – 2026";
+
   for(let i=0;i<halls.length;i++){
     const hall=halls[i];const students=data.filter(r=>getField(r,["Hall No","HallNo"])==hall);if(i>0)doc.addPage();let y=20;
-    if(imgData){doc.addImage(imgData,"JPEG",(pageWidth-250)/2,y,250,50);y+=80;}
+    if(logo){
+      const lh = 85;
+      const lw = Math.round((logo.origW / logo.origH) * lh);
+      doc.addImage(logo.data, logo.fmt, (pageWidth - lw)/2, y, lw, lh);
+      y += lh + 15;
+    }
     doc.setFont("times","bold");doc.setFontSize(12);
     const ct=(txt,yPos)=>doc.text(txt,pageWidth/2,yPos,{align:"center"});
-    ct("Office of the Controller of Examinations",y);y+=18;ct("EVEN Semester of 2025 – 2026",y);y+=18;ct("HALL WISE SEATING ARRANGEMENT",y);y+=18;ct(`DEPARTMENT OF ${departmentFullName}`,y);y+=18;ct(`INTERNAL EXAMINATION – ${examType}`,y);y+=25;
+    ct("Office of the Controller of Examinations",y);y+=18;ct(`${semStr} Semester of ${yearStr}`,y);y+=18;ct("HALL WISE SEATING ARRANGEMENT",y);y+=18;ct(`DEPARTMENT OF ${departmentFullName}`,y);y+=18;ct(`INTERNAL EXAMINATION – ${examType}`,y);y+=25;
     const sample=students[0]||data[0];const rawDate=getField(sample,["Date","date"]);const dateObj=new Date(rawDate);
     const dateStr=`${dateObj.getDate().toString().padStart(2,'0')}-${(dateObj.getMonth()+1).toString().padStart(2,'0')}-${dateObj.getFullYear()}`;const batchText=getField(sample,["Batch","batch"]);
     doc.setFont("times","normal");doc.setFontSize(12);doc.text(`Date: ${dateStr}`,50,y);doc.text(`Session: ${batchText}`,pageWidth/2,y,{align:"center"});doc.text(`Hall: ${hall}`,pageWidth-50,y,{align:"right"});y+=15;
@@ -1656,10 +1711,10 @@ async function generatePDF(data,examType,department){
   }
   doc.save(`HallPlan_${dateForName}_${batchTextForName}_Exam${examType}.pdf`);
 }
-async function generatePDF1(data,examType,department){
+
+async function generatePDF1(data,examType,department,meta={}){
   if(!Array.isArray(data)||data.length===0){alert("No data to generate PDF.");return;}
-  const deptMap={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"};
-  const departmentFullName=department&&deptMap[department]?deptMap[department]:(department?department.toUpperCase():"UNKNOWN DEPARTMENT");
+  const departmentFullName=getDepartmentFullName(department);
   const {jsPDF}=window.jspdf;const doc=new jsPDF("landscape","pt","a4");
   const pageWidth=doc.internal.pageSize.getWidth(),pageHeight=doc.internal.pageSize.getHeight();
   const getField=(obj,names)=>{for(const n of names)if(obj[n]!==undefined&&obj[n]!==null)return obj[n];return "";};
@@ -1668,14 +1723,21 @@ async function generatePDF1(data,examType,department){
   const dateForName=`${dateObjForFile.getDate().toString().padStart(2,'0')}_${(dateObjForFile.getMonth()+1).toString().padStart(2,'0')}_${dateObjForFile.getFullYear()}`;
   const batchTextForName=getField(firstSample,["Batch","batch"])||"Batch";
   const halls=[...new Set(data.map(row=>getField(row,["Hall No","HallNo"])))].filter(Boolean);
-  let imgData=null;
-  try{const resp=await fetch("logo.jpeg");if(resp.ok){const blob=await resp.blob();const bitmap=await createImageBitmap(blob);const canvas=document.createElement("canvas");canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext("2d").drawImage(bitmap,0,0);imgData=canvas.toDataURL("image/jpeg");}}catch(e){console.warn("Logo load failed:",e);}
+  const logo=await loadLogoData();
+  const semStr = meta.semType || "EVEN";
+  const yearStr = meta.acYear || "2025 – 2026";
+
   for(let i=0;i<halls.length;i++){
     const hall=halls[i];const students=data.filter(r=>getField(r,["Hall No","HallNo"])==hall);if(i>0)doc.addPage();let y=20;
-    if(imgData){doc.addImage(imgData,"JPEG",(pageWidth-250)/2,y,250,50);y+=80;}
+    if(logo){
+      const lh = 85;
+      const lw = Math.round((logo.origW / logo.origH) * lh);
+      doc.addImage(logo.data, logo.fmt, (pageWidth - lw)/2, y, lw, lh);
+      y += lh + 15;
+    }
     doc.setFont("times","bold");doc.setFontSize(12);
     const ct=(txt,yPos)=>doc.text(txt,pageWidth/2,yPos,{align:"center"});
-    ct("Office of the Controller of Examinations",y);y+=18;ct("EVEN Semester of 2025 – 2026",y);y+=18;ct("HALL WISE SEATING ARRANGEMENT",y);y+=18;ct(`DEPARTMENT OF ${departmentFullName}`,y);y+=18;ct(`INTERNAL EXAMINATION – ${examType}`,y);y+=25;
+    ct("Office of the Controller of Examinations",y);y+=18;ct(`${semStr} Semester of ${yearStr}`,y);y+=18;ct("HALL WISE SEATING ARRANGEMENT",y);y+=18;ct(`DEPARTMENT OF ${departmentFullName}`,y);y+=18;ct(`INTERNAL EXAMINATION – ${examType}`,y);y+=25;
     const sample=students[0]||data[0];const rawDate=getField(sample,["Date","date"]);const dateObj=new Date(rawDate);
     const dateStr=`${dateObj.getDate().toString().padStart(2,'0')}-${(dateObj.getMonth()+1).toString().padStart(2,'0')}-${dateObj.getFullYear()}`;const batchText=getField(sample,["Batch","batch"]);
     doc.setFont("times","normal");doc.setFontSize(12);doc.text(`Date: ${dateStr}`,50,y);doc.text(`Session: ${batchText}`,pageWidth/2,y,{align:"center"});doc.text(`Hall: ${hall}`,pageWidth-50,y,{align:"right"});y+=15;
@@ -1697,23 +1759,37 @@ async function generatePDF1(data,examType,department){
   }
   doc.save(`HallPlan_${dateForName}_${batchTextForName}_Exam${examType}.pdf`);
 }
+
 async function generateHallPlanSchedule(){
-  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value,selectedExam=document.getElementById("internalExam").value;
-  if(!selectedDate||!selectedBatch||!selectedExam){alert("Please select Date, Batch, and Internal Exam");return;}
+  const selectedDate=document.getElementById("planDate").value,selectedBatch=document.getElementById("planBatch").value;
+  if(!selectedDate||!selectedBatch){alert("Please select Date and Batch");return;}
   const u=JSON.parse(localStorage.getItem("user"));
   if(!u||!u.department){alert("Department information missing. Please login again.");return;}
   try{
     const res=await apiFetch({action:"getStudentSeatingData",date:selectedDate,batch:selectedBatch,department:u.department});
     const data=Array.isArray(res)?res:res.success?res.data:res.result;
     if(!data||data.length===0){alert("No data to generate hall plan schedule.");return;}
+    const sysCfg = await getExamConfigFromBackend();
+    const sample = data[0] || {};
+    const selectedExam = sample.ExamNumber || sysCfg.examNumber || "CAT-I";
+    const semStr = sample.Semester || sysCfg.semester || "EVEN";
+    const yearStr = sample.AcademicYear || sysCfg.academicYear || "2025 – 2026";
     const {jsPDF}=window.jspdf;const doc=new jsPDF("portrait","pt","a4");
     const pageWidth=doc.internal.pageSize.getWidth(),pageHeight=doc.internal.pageSize.getHeight();
-    const departmentFullName={"CSE":"COMPUTER SCIENCE AND ENGINEERING","ECE":"ELECTRONICS AND COMMUNICATION ENGINEERING","ME":"MECHANICAL ENGINEERING","CE":"CIVIL ENGINEERING","ADS":"ARTIFICIAL INTELLIGENCE AND DATA SCIENCE","FY":"FIRST YEAR DEPARTMENT"}[u.department]||u.department;
-    let imgData=null;
-    try{const resp=await fetch("logo.jpeg");if(resp.ok){const blob=await resp.blob();const bitmap=await createImageBitmap(blob);const canvas=document.createElement("canvas");canvas.width=bitmap.width;canvas.height=bitmap.height;canvas.getContext("2d").drawImage(bitmap,0,0);imgData=canvas.toDataURL("image/jpeg");}}catch(e){console.warn("Logo load failed:",e);}
+    const departmentFullName=getDepartmentFullName(u.department);
+    const logo=await loadLogoData();
     const groupedByHall={};data.forEach(row=>{const hall=row["Hall No"]||row["HallNo"];if(!groupedByHall[hall])groupedByHall[hall]=[];groupedByHall[hall].push(row);});
     let y=230;
-    function addHeader(){let yH=20;if(imgData){doc.addImage(imgData,"JPEG",(pageWidth-250)/2,yH,250,50);yH+=80;}doc.setFont("times","bold");doc.setFontSize(14);doc.text("Office of the Controller of Examinations",pageWidth/2,90,{align:"center"});doc.text("EVEN Semester of 2025 – 2026",pageWidth/2,110,{align:"center"});doc.text("Hall Plan Schedule",pageWidth/2,130,{align:"center"});doc.setFont("times","normal");doc.setFontSize(12);doc.text(`DEPARTMENT OF ${departmentFullName}`,pageWidth/2,150,{align:"center"});doc.text(`INTERNAL EXAMINATION - ${selectedExam}`,pageWidth/2,170,{align:"center"});doc.text(`Date: ${selectedDate}`,70,190);doc.text(`Session: ${selectedBatch}`,pageWidth-70,190,{align:"right"});const tL=50,tR=pageWidth-50;doc.setLineWidth(0.5);doc.rect(tL,200,tR-tL,25);[110,200,350,500].forEach(x=>doc.line(x,200,x,225));const hdrs=["Hall No","Course Code","Year & Section","Roll Number","Total"];const ctrs=[80,155,275,425,525];doc.setFont("times","bold");doc.setFontSize(11);hdrs.forEach((h,i)=>doc.text(h,ctrs[i],217,{align:"center"}));y=225;}
+    function addHeader(){
+      let yH=20;
+      if(logo){
+        const lh = 85;
+        const lw = Math.round((logo.origW / logo.origH) * lh);
+        doc.addImage(logo.data, logo.fmt, (pageWidth - lw)/2, yH, lw, lh);
+        yH += lh + 10;
+      }
+      doc.setFont("times","bold");doc.setFontSize(14);doc.text("Office of the Controller of Examinations",pageWidth/2,yH+20,{align:"center"});doc.text(`${semStr} Semester of ${yearStr}`,pageWidth/2,yH+40,{align:"center"});doc.text("Hall Plan Schedule",pageWidth/2,yH+60,{align:"center"});doc.setFont("times","normal");doc.setFontSize(12);doc.text(`DEPARTMENT OF ${departmentFullName}`,pageWidth/2,yH+80,{align:"center"});doc.text(`INTERNAL EXAMINATION - ${selectedExam}`,pageWidth/2,yH+100,{align:"center"});doc.text(`Date: ${selectedDate}`,70,yH+120);doc.text(`Session: ${selectedBatch}`,pageWidth-70,yH+120,{align:"right"});const tL=50,tR=pageWidth-50;doc.setLineWidth(0.5);doc.rect(tL,yH+130,tR-tL,25);[110,200,350,500].forEach(x=>doc.line(x,yH+130,x,yH+155));const hdrs=["Hall No","Course Code","Year & Section","Roll Number","Total"];const ctrs=[80,155,275,425,525];doc.setFont("times","bold");doc.setFontSize(11);hdrs.forEach((h,i)=>doc.text(h,ctrs[i],yH+147,{align:"center"}));y=yH+155;
+    }
     function addFooter(){doc.setFont("times","normal");doc.setFontSize(12);doc.text("Department Exam Cell In-charge",100,pageHeight-50);doc.text("HoD",pageWidth-100,pageHeight-50,{align:"right"});}
     addHeader();
     const tL=50,tR=pageWidth-50,colX=[tL,110,200,350,500,tR],ctrs=[80,155,275,425,525];

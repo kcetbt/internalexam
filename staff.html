@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>Staff Dashboard - Hall Attendance</title>
+  <link rel="icon" type="image/png" href="Logo-sq.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="common.js"></script>
   
@@ -702,12 +703,12 @@
       <div class="form-row">
         <div class="form-control">
           <label class="form-label">📅 Select Date</label>
-          <input type="date" id="dateFilter" />
+          <input type="date" id="dateFilter" onchange="populateHalls()" />
         </div>
 
         <div class="form-control">
           <label class="form-label">⏰ Select Batch</label>
-          <select id="batchSelect">
+          <select id="batchSelect" onchange="populateHalls()">
             <option value="FN">Forenoon (FN)</option>
             <option value="AN">Afternoon (AN)</option>
           </select>
@@ -798,7 +799,9 @@ function initStaff(){
 
 /* === Load Halls === */
 async function populateHalls() {
-  const res = await apiFetch({ action: "getHalls", department: user.department });
+  const dateVal = document.getElementById('dateFilter')?.value || '';
+  const batchVal = document.getElementById('batchSelect')?.value || '';
+  const res = await apiFetch({ action: "getHalls", department: user.department, date: dateVal, batch: batchVal });
   const sel = document.getElementById('hallSelect');
   sel.innerHTML = '<option value="">-- Select Hall --</option>';
 
@@ -809,7 +812,7 @@ async function populateHalls() {
 
   const halls = res.halls || [];
   if (halls.length === 0) {
-    sel.innerHTML = '<option value="">No halls available</option>';
+    sel.innerHTML = '<option value="">No halls available for selected date/batch</option>';
     return;
   }
 
